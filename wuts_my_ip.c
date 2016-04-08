@@ -1,3 +1,7 @@
+/*
+  A simple server which accepts client web requests and sends back the client's ip address.
+*/
+
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -10,7 +14,7 @@
 #define PORT 9666
 
 int main(void) {
-  int host_sock_fd;
+  int host_sock_fd; // the socket that for the host
   int option_value = 1;
   struct sockaddr_in host_addr; 
   int client_sock_fd;
@@ -149,7 +153,8 @@ int main(void) {
        http://stackoverflow.com/questions/13979150/why-is-sin-addr-inside-the-structure-in-addr
 
        `char *inet_ntoa(strut in_addr in)` is used to convert internet host address to a string
-       with internet standard dot notation (xxx.xx.xxx.xxx)
+       with internet standard dot notation (xxx.xx.xxx.xxx). This method is defined in
+       /usr/
 
        Similarly, `inet_ntohs` converts the client address port, client_addr.sin_port, from
        network byte order to host byte order. This is that big-endian vs little-endian issue
@@ -173,6 +178,9 @@ int main(void) {
       Filter out all the weird characters.  Not sure why they're in buffer
     */
     int indx;
+    // I hate magic numbers as much as the next guy, but this isn't production code so w/e. 
+    // The 75 you see below is the number of chars in the "List to John Coltrane... 
+    // you ip address" message above.
     int message_length = 75 + sizeof(inet_ntoa(client_addr.sin_addr));
     for(indx = 0; indx < message_length; indx++){
       out_message[indx] = buffer[indx];
@@ -189,7 +197,7 @@ int main(void) {
       Returns -1 if failed to send message.
     */
     send(client_sock_fd, out_message, sizeof(buffer), 0);
-    close(client_sock_fd); 
+    close(client_sock_fd);
   }
 
   return 0; 
