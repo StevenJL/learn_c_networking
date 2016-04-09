@@ -14,7 +14,7 @@
 #define PORT 9666
 
 int main(void) {
-  int host_sock_fd; // the socket that for the host
+  int host_sock_fd;
   int option_value = 1;
   struct sockaddr_in host_addr; 
   int client_sock_fd;
@@ -32,7 +32,7 @@ int main(void) {
     The `PF_INET` argument is defined in /usr/include/bits/socket.h and is equal to the integer 2.  It tells 
     `socket()` that we want to create a socket for the IP protocol family. 
 
-    The `SOCK_STREAM` argument is defined in /usr/includebits/socket.h and is equal to the integer 1. It tells 
+    The `SOCK_STREAM` argument is defined in /usr/include/bits/socket.h and is equal to the integer 1. It tells 
     `socket()` that we want to create a socket that uses TCP (as opposed to UDP). 
     
     The 3rd argument of 0 is used to differentiate protocols if there are multiple protocols within a family.
@@ -45,20 +45,25 @@ int main(void) {
 
   /*
     `int setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len)`
-    configures the socket options by modifying the value pointed to by `option_value`.
+    configures the socket options by modifying it to the value pointed to by `option_value`.
 
-    The first argument, `socket`, is the socket we want to create a configuration for.  The third argument,
-    `option_name` describes a configuration we want to save to `option_value`. The second argument,
-    `level` also describes a configuration, a mysterious "level" apparently. I just know its also
-    part of the configuration of `option_value`.
+    The first argument, `socket`, is the socket we want to create a configuration for.  The second argument,
+    `level` also describes a configuration, a mysterious "level" apparently. I just know its also a 
+    part of the socket configuration. The offical documentation on level states: 
+
+      "The level argument specifies the protocol level at which the option resides. To set options at 
+      the socket level, specify the level argument as SOL_SOCKET."
+
+    The third argument is a pointer, `option_value`.  This is the value that actually configures the socket.
      
     In our invocation below, the `level` argument is assigned to SOL_SOCKET which is defined in sys/socket.h 
-    and is equal to the hexidecimcal 0xffff. 
+    and is equal to the hexidecimcal 0xffff.  We do this because we want to configure it at the "socket level".
 
-    In our invocation below, the `option_name` argument is assigned to `SO_REUSEADDR`, which is a
-    configuration we want so that we can resuse a socket for binding to a given address. For example, 
-    if a previous used socket was not closed properly, it would appear to be in use.
-    This option lets us use that socket anyway.
+    In our invocation below, the `option_name` argument is assigned to `SO_REUSEADDR`, and the configuration
+    value for this option is a pointer to `option_value`, which we initialized as 1 (true) earlier. This 
+    will configure this socket so that we can re-use a socket for binding to a given address. For example, 
+    if a previous used socket was not closed properly, it would appear to be in use. This option lets us use 
+    that socket anyway.
   */
 
   if (setsockopt(host_sock_fd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) == -1 ){
@@ -92,8 +97,8 @@ int main(void) {
   host_addr.sin_port = htons(PORT);
 
   /*
-   When setting the ip address of the host, you'll notice its zero.  That doesn't
-   mean that the host internet address is 0 (which doesn't even make sense an ip address
+   You may notice below in the setting of the ip address of the host, it's set to zero.  That doesn't
+   mean that the host internet address is 0 (which doesn't make sense, since an ip address
    is an ordered set of 4 integers). This means automatically fill it with the host's ip address.
   */
   host_addr.sin_addr.s_addr = 0;
@@ -109,8 +114,9 @@ int main(void) {
   memset(&(host_addr.sin_zero), '\0', 8);
 
   /*
-    This is where the magic happens.  By binding the socket to the host address, we can now
-    read and write to this address as if it was a file.
+    This is where the magic happens.  By binding `host_sock_fd` to the host address, we can now
+    read from the host address/port like a file.  Note `host_sock_fd` must not already be
+    bound to an address for this invocation to work.
 
     Note also, we are converting host_addr from type struct sockaddr_in to type struct sockaddr.
     Subtle.
@@ -135,14 +141,14 @@ int main(void) {
     return 1;
   }
 
-  while(1) { // basically run this process forever unless control-C'ed
+  while(1) { // basically run this process forever until control-C'ed
     sin_size = sizeof(struct sockaddr_in); // get the size of struct type sockaddr_in
 
     /*
       `int accept(int socket, struct sockaddr address, socklen_t address_len)` accepts a new connection on `socket`.
       Technically, it accepts the first connection on the queue of pending connections, creates a new socket
       with the same configuration as `socket` and allocates a new file descriptor for that new socket
-      and then returns that file descriptor, which is now has a connection.
+      and then returns that file descriptor, which is connected to a client.
 
       Referring to the invocation below, `client_sock_fd` is connected to a remote client and cannot accept more
       connections.  However `host_sock_fd` remains open and can accept new connections.
@@ -166,7 +172,7 @@ int main(void) {
 
        `char *inet_ntoa(strut in_addr in)` is used to convert internet host address to a string
        with internet standard dot notation (xxx.xx.xxx.xxx). This method is defined in
-       /usr/
+       /usr/include/arpa/inet.
 
        Similarly, `inet_ntohs` converts the client address port, client_addr.sin_port, from
        network byte order to host byte order. This is that big-endian vs little-endian issue
@@ -174,7 +180,7 @@ int main(void) {
     */ 
 
     /* 
-       Now that an accepted connection is represented by the `client_sock_fd` file descriptor, 
+       Now that the client address information has been saved to the struct `client_addr`.
        we are going to find the ip address and port of the client. We will print a message on 
        the host showing the client's ip address and port.
     */
@@ -183,7 +189,6 @@ int main(void) {
       inet_ntoa(client_addr.sin_addr), 
       ntohs(client_addr.sin_port)
     ); 
-    
 
     /* 
       Let's prepare a message to respond to the client and save it in the
@@ -203,8 +208,8 @@ int main(void) {
       chars on the client.
 
       I hate magic numbers as much as the next guy, but this isn't production code so w/e. 
-      The 75 you see below is the number of chars in the "List to John Coltrane... 
-      you ip address" message above.
+      The 75 you see below is the number of bytes in the "Listen to John Coltrane... 
+      your ip address is" message above.
     */
     int message_length = 75 + sizeof(inet_ntoa(client_addr.sin_addr));
 
@@ -220,7 +225,7 @@ int main(void) {
     */
     send(client_sock_fd, buffer, message_length, 0);
 
-    // close the connection with the socket
+    // close the connection with the client.
     close(client_sock_fd);
   }
 
