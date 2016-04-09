@@ -25,8 +25,9 @@ int main(void) {
   int recv_length = 1;
 
   /* 
-    `socket()` returns an int referring to a socket file descriptor. Recall that in Unix everything is a file
-    including networking sockets. It returns -1 if there was an error while creating. 
+    `int socket(int domain, int type, int protocol) creates a socket. It returns the file descriptor
+    for the socket (as an int). Recall that in Unix everything is a file including sockets. It returns 
+    -1 if there was an error while creating. 
     
     The `PF_INET` argument is defined in /usr/include/bits/socket.h and is equal to the integer 2.  It tells 
     `socket()` that we want to create a socket for the IP protocol family. 
@@ -43,23 +44,23 @@ int main(void) {
   }
 
   /*
-    `setsockopt()` sets socket options. 
-    
-    The first argument `host_sock_fd` is the socket we created above. 
+    `int setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len)`
+    configures the socket options by modifying the value pointed to by `option_value`.
 
-    The second argument SOL_SOCKET specifies the protocol level at which the option resides. SOL_SOCKET
-    is defined in sys/socket.h and is equal to the hexidecimcal 0xffff. For more information see this:
-    http://stackoverflow.com/questions/21515946/sol-socket-in-getsockopt
+    The first argument, `socket`, is the socket we want to create a configuration for.  The third argument,
+    `option_name` describes a configuration we want to save to `option_value`. The second argument,
+    `level` also describes a configuration, a mysterious "level" apparently. I just know its also
+    part of the configuration of `option_value`.
+     
+    In our invocation below, the `level` argument is assigned to SOL_SOCKET which is defined in sys/socket.h 
+    and is equal to the hexidecimcal 0xffff. 
 
-    The third argument SO_REUSEADDR means we want to reuse a socket at a given address for binding.
-    For example, if a previous used socket was not closed properly, it would appear to be in use.
-    This option lets us use that socket anyway. We are setting the value of SO_REUSEADDR to the value
-    pointed to by the fourth argument, which is equal to 1, allowing us to re-use sockets that
-    appear in use. The last argumnent is the size of the third argument, which is an int. The fact
-    that we are passing a pointer to `option_value` as well as its size indicates that `setsocketopt`
-    may sometimes change the value of option_value.
-
+    In our invocation below, the `option_name` argument is assigned to `SO_REUSEADDR`, which is a
+    configuration we want so that we can resuse a socket for binding to a given address. For example, 
+    if a previous used socket was not closed properly, it would appear to be in use.
+    This option lets us use that socket anyway.
   */
+
   if (setsockopt(host_sock_fd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) == -1 ){
     printf("%s", "Error while configuring socket's re-use option equal to true\n");
     return 1;
@@ -74,7 +75,7 @@ int main(void) {
     3) The internet address
     4) The zero padded portion
 
-    In the code below, we set `host_addr` to persist address information about the host.
+     Let's configure `host_addr` to describe the address of the host.
   */
 
   host_addr.sin_family = AF_INET; // This is specifying the address type as ipv4
@@ -82,7 +83,7 @@ int main(void) {
   /*
     `htons` which stands for host-to-network-sort is defined /usr/include/netinet/in.h
     and it converts a 16-bit integer from the host's byte order to network byte order.
-    This is necessary because the network bye ordering is big-endian while the x86 processor
+    This is necessary because the network byte ordering is big-endian while the x86 processor
     encodes as little-endian.
 
     Anyways, we are setting the port portion of the host internet address.
@@ -91,9 +92,9 @@ int main(void) {
   host_addr.sin_port = htons(PORT);
 
   /*
-   This sets the ip address portion of the host. You'll notice its zero.  That doesn't
+   When setting the ip address of the host, you'll notice its zero.  That doesn't
    mean that the host internet address is 0 (which doesn't even make sense an ip address
-   is an ordered set of 4 integers). This means automatically fill it ith my ip.
+   is an ordered set of 4 integers). This means automatically fill it with the host's ip address.
   */
   host_addr.sin_addr.s_addr = 0;
 
@@ -120,10 +121,14 @@ int main(void) {
   }
 
   /*
-    `int listen(int socket, int backlog)` tells a socket to start listening.
-    Technically, it starts a connection (a semi-permanent channel of communication).
-    The backlog argument is used to limit the number of outstanding connections in
-    the socket's listen queue.
+    `int listen(int socket, int backlog)` tells the port that's bound to this socket to 
+    start listening for socket connections as they come in. Connections that come in are then
+    placed in a listen queue. The backlog argument is used to limit the number of outstanding 
+    connections in the socket's listen queue. I get the sense that `backlog` doesn't guarantee 
+    that's the limit on the listen queue, as it's only advisory: 
+    http://stackoverflow.com/questions/5111040/listen-ignores-the-backlog-argument
+
+    In the invocation below, the suggested size of the listen queue is set to 5.
   */
   if (listen(host_sock_fd, 5) == -1) {
     printf("%s", "Could not listen to socket\n");
@@ -135,9 +140,16 @@ int main(void) {
 
     /*
       `int accept(int socket, struct sockaddr address, socklen_t address_len)` accepts a new connection on `socket`.
-      Technically, it  the first connection on the queue of pending connections, creates a new socket
+      Technically, it accepts the first connection on the queue of pending connections, creates a new socket
       with the same configuration as `socket` and allocates a new file descriptor for that new socket
-      and then returns that file descriptor.
+      and then returns that file descriptor, which is now has a connection.
+
+      Referring to the invocation below, `client_sock_fd` is connected to a remote client and cannot accept more
+      connections.  However `host_sock_fd` remains open and can accept new connections.
+
+      `accept` also stores the connections address info in `struct sockaddr address`. Referring to the
+      invocation below, the client's address information gets stored in `client_addr` struct,
+      but note we typecast it to the sockaddr type.
     */
     client_sock_fd = accept(host_sock_fd, (struct sockaddr *)&client_addr, &sin_size); 
 
@@ -161,13 +173,22 @@ int main(void) {
        mentioned earlier.
     */ 
 
-    // print a message on the server showing the client's ip address and port.
+    /* 
+       Now that an accepted connection is represented by the `client_sock_fd` file descriptor, 
+       we are going to find the ip address and port of the client. We will print a message on 
+       the host showing the client's ip address and port.
+    */
     printf(
       "server: got connection from %s port %d\n", 
       inet_ntoa(client_addr.sin_addr), 
       ntohs(client_addr.sin_port)
     ); 
     
+
+    /* 
+      Let's prepare a message to respond to the client and save it in the
+      buffer char array.
+    */
     strcpy(buffer, " Listen to John Coltrane... ");
 
     strcat(buffer, "By the way, your ip address is: ");
@@ -175,16 +196,17 @@ int main(void) {
     strcat(buffer, " \n");
 
     /*
-      Filter out all the weird characters.  Not sure why they're in buffer
+      Note that `buffer` is an array of 120 chars and we only filled the first portion of 
+      it with the "Listen to John Coltrane.... you ip address is" message.  The rest of the
+      array is garbage memory so we don't want to print that. So we need to calculate
+      a `message_length` and pass that `send` function below so we don't print garbage
+      chars on the client.
+
+      I hate magic numbers as much as the next guy, but this isn't production code so w/e. 
+      The 75 you see below is the number of chars in the "List to John Coltrane... 
+      you ip address" message above.
     */
-    int indx;
-    // I hate magic numbers as much as the next guy, but this isn't production code so w/e. 
-    // The 75 you see below is the number of chars in the "List to John Coltrane... 
-    // you ip address" message above.
     int message_length = 75 + sizeof(inet_ntoa(client_addr.sin_addr));
-    for(indx = 0; indx < message_length; indx++){
-      out_message[indx] = buffer[indx];
-    }
 
     /*
        Sends a message to a socket.
@@ -196,11 +218,12 @@ int main(void) {
 
       Returns -1 if failed to send message.
     */
-    send(client_sock_fd, out_message, sizeof(buffer), 0);
+    send(client_sock_fd, buffer, message_length, 0);
+
+    // close the connection with the socket
     close(client_sock_fd);
   }
 
   return 0; 
 }
-
 
