@@ -1,5 +1,5 @@
 /*
-  A simple server which accepts client web requests and sends back the client's ip address.
+  A simple server which accepts web requests and sends back the client's ip address.
 */
 
 #include <stdio.h>
@@ -119,7 +119,10 @@ int main(void) {
     bound to an address for this invocation to work.
 
     Note also, we are converting host_addr from type struct sockaddr_in to type struct sockaddr.
-    Subtle.
+    The reason for this is because `bind` accepts a `sockaddr` type, not a `sockaddr_in`. So why
+    were we using `sockaddr_in` in the first place? It's because it's the struct to use for the 
+    internet ("sockaddr_in" is short for "socket address internet") and it's easier to work with. 
+    This trick of using sockaddr_in and then typecasting it to sockaddr is common network hacking.
   */
   if (bind(host_sock_fd, (struct sockaddr *)&host_addr, sizeof(struct sockaddr)) == 1) {
     printf("%s", "Failed to Bind Socket to Host Address\n");
@@ -155,7 +158,8 @@ int main(void) {
 
       `accept` also stores the connections address info in `struct sockaddr address`. Referring to the
       invocation below, the client's address information gets stored in `client_addr` struct,
-      but note we typecast it to the sockaddr type.
+      but note we typecast it to the sockaddr type. Again, note the typcasting from sockaddr_in to sockaddr
+      trick in use again here.
     */
     client_sock_fd = accept(host_sock_fd, (struct sockaddr *)&client_addr, &sin_size); 
 
