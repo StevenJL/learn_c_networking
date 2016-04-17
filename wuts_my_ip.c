@@ -65,8 +65,7 @@ int main(void) {
     if a previous used socket was not closed properly, it would appear to be in use. This option lets us use 
     that socket anyway.
   */
-
-  if (setsockopt(host_sock_fd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) == -1 ){
+  if (setsockopt(host_sock_fd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) == -1 ) {
     printf("%s", "Error while configuring socket's re-use option equal to true\n");
     return 1;
   }
@@ -82,7 +81,6 @@ int main(void) {
 
      Let's configure `host_addr` to describe the address of the host.
   */
-
   host_addr.sin_family = AF_INET; // This is specifying the address type as ipv4
 
   /*
@@ -93,7 +91,6 @@ int main(void) {
 
     Anyways, we are setting the port portion of the host internet address.
   */
-
   host_addr.sin_port = htons(PORT);
 
   /*
@@ -122,7 +119,7 @@ int main(void) {
     The reason for this is because `bind` accepts a `sockaddr` type, not a `sockaddr_in`. So why
     were we using `sockaddr_in` in the first place? It's because it's the struct to use for the 
     internet ("sockaddr_in" is short for "socket address internet") and it's easier to work with. 
-    This trick of using sockaddr_in and then typecasting it to sockaddr is common network hacking.
+    This trick of using sockaddr_in and then typecasting it to sockaddr is a common hack.
   */
   if (bind(host_sock_fd, (struct sockaddr *)&host_addr, sizeof(struct sockaddr)) == 1) {
     printf("%s", "Failed to Bind Socket to Host Address\n");
@@ -152,6 +149,8 @@ int main(void) {
       Technically, it accepts the first connection on the queue of pending connections, creates a new socket
       with the same configuration as `socket` and allocates a new file descriptor for that new socket
       and then returns that file descriptor, which is connected to a client.
+
+      Note this is a blocking call. ie. this will hang until a connection comes in.
 
       Referring to the invocation below, `client_sock_fd` is connected to a remote client and cannot accept more
       connections.  However `host_sock_fd` remains open and can accept new connections.
@@ -210,12 +209,8 @@ int main(void) {
       array is garbage memory so we don't want to print that. So we need to calculate
       a `message_length` and pass that `send` function below so we don't print garbage
       chars on the client.
-
-      I hate magic numbers as much as the next guy, but this isn't production code so w/e. 
-      The 75 you see below is the number of bytes in the "Listen to John Coltrane... 
-      your ip address is" message above.
     */
-    int message_length = 75 + sizeof(inet_ntoa(client_addr.sin_addr));
+    int message_length = strlen(buffer);
 
     /*
        Sends a message to a socket.
