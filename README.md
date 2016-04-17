@@ -41,7 +41,7 @@ Now visit 127.0.0.1 on the browser and you should see this [simple html page](ht
 #### How It Works
 Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/blob/master/minimal_web_server.c)
 
-# References
+## References
 
 Hacking by Jon Erickson: http://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441
 
@@ -52,4 +52,14 @@ opengroup.org socket.h documentation: http://pubs.opengroup.org/onlinepubs/00969
 opengroup.org arpa/inet.h documentation: http://pubs.opengroup.org/onlinepubs/009695399/basedefs/arpa/inet.h.html
 
 opengroup.org net/inet.h documentation: http://pubs.opengroup.org/onlinepubs/009695399/basedefs/arpa/inet.h.html
+
+## Contributing
+
+Pull requests more than welcome.  Especially if there are bugs, better ways to code things, better ways to explain things.
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
 

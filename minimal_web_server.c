@@ -390,6 +390,7 @@ int main(void) {
       return 1;
     }
 
+    // process the request with the `process_request` helper function defined above.
     process_request(client_sock_fd, &client_addr);
   }
 
