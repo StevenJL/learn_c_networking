@@ -150,6 +150,8 @@ int main(void) {
       with the same configuration as `socket` and allocates a new file descriptor for that new socket
       and then returns that file descriptor, which is connected to a client.
 
+      Note this is a blocking call. ie. this will hang until a connection comes in.
+
       Referring to the invocation below, `client_sock_fd` is connected to a remote client and cannot accept more
       connections.  However `host_sock_fd` remains open and can accept new connections.
 
@@ -207,12 +209,8 @@ int main(void) {
       array is garbage memory so we don't want to print that. So we need to calculate
       a `message_length` and pass that `send` function below so we don't print garbage
       chars on the client.
-
-      I hate magic numbers as much as the next guy, but this isn't production code so w/e. 
-      The 75 you see below is the number of bytes in the "Listen to John Coltrane... 
-      your ip address is" message above.
     */
-    int message_length = 75 + sizeof(inet_ntoa(client_addr.sin_addr));
+    int message_length = strlen(buffer);
 
     /*
        Sends a message to a socket.
