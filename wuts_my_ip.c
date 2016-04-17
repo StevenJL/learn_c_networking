@@ -1,5 +1,5 @@
 /*
-  A simple server which accepts web requests and sends back the client's ip address.
+  A simple server which accepts network requests and sends back the client's ip address.
 */
 
 #include <stdio.h>

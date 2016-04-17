@@ -42,7 +42,7 @@ int get_file_size(int fd) {
 }
 
 /*
-   `int send_string(int sockfd, unsigned char *buffer)` sends the string `buffer` to the 
+   `int send_string(int sockfd, char *buffer)` sends the string `buffer` to the 
    socket `sockfd`.  Returns 1 on success and 0 on failure. 
 */
 int send_string(int sock_fd, char *buffer) { 
@@ -60,7 +60,7 @@ int send_string(int sock_fd, char *buffer) {
 }
 
 /*
-  `int read_line(int sockfd, unsigned char *dest_buffer)` will read bytes from
+  `int read_line(int sockfd, char *dest_buffer)` will read bytes from
   the socket `sockfd` and write these bytes to `dest_buffer` until it receives
   the EOL char.
 
