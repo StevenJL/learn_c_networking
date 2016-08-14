@@ -19,12 +19,12 @@ on the host using `telnet` and the host's private ip address. The 9666 port is
 hardcoded in the code example.
 
 ```
-telnet 192.168.128.xxx 9666 
+telnet 192.168.128.xxx 9666
 > Listen to John Coltrane... By the way, your ip address is: 192.168.128.237
 ```
 
-#### How It Works
-Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/blob/master/wuts_my_ip.c)
+### How It Works
+Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/blob/master/wuts_my_ip/wuts_my_ip.c)
 
 ## Minimal HTTP Web Server
 ### Usage
@@ -38,8 +38,8 @@ sudo ./server
 
 Now visit 127.0.0.1 on the browser and you should see this [simple html page](https://github.com/StevenJL/learn_c_networking/blob/master/mws_root/index.html) returned by the browser.
 
-#### How It Works
-Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/blob/master/minimal_web_server.c)
+### How It Works
+Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/tree/master/minimal_web_server)
 
 ## References
 
