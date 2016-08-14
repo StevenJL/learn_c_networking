@@ -5,6 +5,9 @@ Learn C network programming with these examples.
 # Examples
 
 ## Wuts My Ip
+
+A simple server that listens to incoming network requests and sends back client's ip address.
+
 ### Usage
 
 On host
@@ -26,7 +29,12 @@ telnet 192.168.128.xxx 9666
 ### How It Works
 Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/blob/master/wuts_my_ip/wuts_my_ip.c)
 
+## Echo Client and Server
+
 ## Minimal HTTP Web Server
+
+A server that listens to port 80, and processes HTTP requests.
+
 ### Usage
 
 On host
@@ -40,6 +48,8 @@ Now visit 127.0.0.1 on the browser and you should see this [simple html page](ht
 
 ### How It Works
 Learn how this works by reading the [prodigiously documented source code](https://github.com/StevenJL/learn_c_networking/tree/master/minimal_web_server)
+
+
 
 ## References
 
